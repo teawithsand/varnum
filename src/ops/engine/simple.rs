@@ -152,8 +152,6 @@ impl UnsignedEngine for SimpleEngine {
         let bytes = (n / D::NUM_BITS) as usize;
         let bits = (n % D::NUM_BITS) as usize;
 
-        println!("{}b {}B", bits, bytes);
-
         // 1. Shift bytes
         // well, shifting left in little endian is shifting right actually...
         for i in (bytes..res.len()).rev() {
