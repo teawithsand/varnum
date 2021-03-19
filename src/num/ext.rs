@@ -1,4 +1,4 @@
-use crate::num::{BigNum, BigNumMut, DynamicBigNum, UnsignedNumDigit};
+use crate::num::{BigNum, BigNumMut, UnsignedNumDigit};
 use crate::ops::UnsignedEngine;
 
 pub trait BigNumExt {

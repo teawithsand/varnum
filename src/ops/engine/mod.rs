@@ -24,17 +24,21 @@ pub trait UnsignedEngine {
 
     /// Shifts number to the left by `n` bits.
     /// Does not resize number if result does not fit.
-    /// 
+    ///
     /// # Retrun
     /// Returns true if result size does not fit `res`.
-    fn shift_left_u32<D>(res: &mut impl BigNumMut<Digit = D>, n: u32) -> bool;
+    fn shift_left_u32<D>(res: &mut impl BigNumMut<Digit = D>, n: u32) -> bool
+    where
+        D: UnsignedNumDigit;
 
     /// Shifts number to the left by `n` bits.
     /// Does not resize number if result does not fit.
-    /// 
+    ///
     /// # Retrun
     /// Returns true if result size does not fit `res`.
-    fn shift_right_u32<D>(res: &mut impl BigNumMut<Digit = D>, n: u32) -> bool;
+    fn shift_right_u32<D>(res: &mut impl BigNumMut<Digit = D>, n: u32) -> bool
+    where
+        D: UnsignedNumDigit;
 
     /// Multiplies `lhs` and `rhs` and adds result of multiplication to res.
     ///

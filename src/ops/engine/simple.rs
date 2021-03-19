@@ -55,7 +55,7 @@ pub struct SimpleEngine {}
 impl UnsignedEngine for SimpleEngine {
     fn add_accumulate<D>(res: &mut impl BigNumMut<Digit = D>, rhs: &impl BigNum<Digit = D>) -> bool
     where
-        D: UnsignedNumDigit
+        D: UnsignedNumDigit,
     {
         assert!(res.len() >= rhs.len());
         let mut i = 0;
@@ -142,11 +142,53 @@ impl UnsignedEngine for SimpleEngine {
         borrow
     }
 
-    fn shift_left_u32<D>(res: &mut impl BigNumMut<Digit = D>, n: u32) -> bool {
-        unimplemented!();
+    fn shift_left_u32<D>(res: &mut impl BigNumMut<Digit = D>, n: u32) -> bool
+    where
+        D: UnsignedNumDigit,
+    {
+        let ov_bytes = (n / D::NUM_BITS) as usize;
+
+        let n = n % (res.len() as u32 * D::NUM_BITS);
+        let bytes = (n / D::NUM_BITS) as usize;
+        let bits = (n % D::NUM_BITS) as usize;
+
+        println!("{}b {}B", bits, bytes);
+
+        // 1. Shift bytes
+        // well, shifting left in little endian is shifting right actually...
+        for i in (bytes..res.len()).rev() {
+            res[i] = res[i - bytes];
+        }
+
+        // 2. Fill rest with zeros
+        for i in 0..bytes {
+            res[i] = D::ZERO;
+        }
+
+        // 2. Shift bits
+        // however each digit may have it's own endianness so use bitwise ops which do actual left shift
+        // on each number if it's required
+        if bits > 0 {
+            // Mask used to get lowest bits from each digit to put them as highest bits of other digit
+            let shift_mask = (!D::ZERO) << (D::NUM_BITS - bits as u32);
+
+            for i in (0..res.len()).rev() {
+                if i != res.len() - 1 {                     // on the rightmost digit bits are lost, there is no number to transfer them to
+                    let imm = (res[i] & shift_mask) >> (D::NUM_BITS - bits as u32);
+                    res[i + 1] |= imm;
+                }
+                res[i] = res[i] << bits as u32;
+            }
+        }
+
+
+        ov_bytes >= res.len()
     }
 
-    fn shift_right_u32<D>(res: &mut impl BigNumMut<Digit = D>, n: u32) -> bool {
+    fn shift_right_u32<D>(res: &mut impl BigNumMut<Digit = D>, n: u32) -> bool
+    where
+        D: UnsignedNumDigit,
+    {
         unimplemented!();
     }
 
@@ -244,7 +286,8 @@ mod test {
                 let bn_b = VecBigNum::from(Vec::from(&b.to_le_bytes()[..]));
                 let (c, overflow) = a.overflowing_add(b);
 
-                let mut res: VecBigNum<u8> = VecBigNum::new_zeroed_sized(core::mem::size_of::<u16>());
+                let mut res: VecBigNum<u8> =
+                    VecBigNum::new_zeroed_sized(core::mem::size_of::<u16>());
                 let ov1 = SimpleEngine::add_accumulate(&mut res, &bn_a);
                 let ov2 = SimpleEngine::add_accumulate(&mut res, &bn_b);
 
@@ -264,7 +307,8 @@ mod test {
                 let bn_b = VecBigNum::from(Vec::from(&b.to_le_bytes()[..]));
                 let (c, overflow) = a.overflowing_sub(b);
 
-                let mut res: VecBigNum<u8> = VecBigNum::new_zeroed_sized(core::mem::size_of::<u16>());
+                let mut res: VecBigNum<u8> =
+                    VecBigNum::new_zeroed_sized(core::mem::size_of::<u16>());
                 let ov1 = SimpleEngine::add_accumulate(&mut res, &bn_a);
                 let ov2 = SimpleEngine::sub_accumulate(&mut res, &bn_b);
 
@@ -284,8 +328,27 @@ mod test {
                 let bn_b = VecBigNum::from(Vec::from(&b.to_le_bytes()[..]));
                 let (c, overflow) = a.overflowing_mul(b);
 
-                let mut res: VecBigNum<u8> = VecBigNum::new_zeroed_sized(core::mem::size_of::<u16>());
+                let mut res: VecBigNum<u8> =
+                    VecBigNum::new_zeroed_sized(core::mem::size_of::<u16>());
                 let ov2 = SimpleEngine::mul_accumulate(&mut res, &bn_a, &bn_b);
+
+                assert_eq!(overflow, ov2);
+                assert_eq!(&res.into_inner()[..], &c.to_le_bytes()[..]);
+            }
+        }
+    }
+
+    #[test]
+    fn test_shift_left_u32() {
+        for a in 0..(std::u16::MAX) {
+            for b in 0..18u32 {
+                let bn_a = VecBigNum::from(Vec::from(&a.to_le_bytes()[..]));
+                let (c, overflow) = a.overflowing_shl(b);
+
+                let mut res: VecBigNum<u8> =
+                    VecBigNum::new_zeroed_sized(core::mem::size_of::<u16>());
+                SimpleEngine::add_accumulate(&mut res, &bn_a);
+                let ov2 = SimpleEngine::shift_left_u32(&mut res, b);
 
                 assert_eq!(overflow, ov2);
                 assert_eq!(&res.into_inner()[..], &c.to_le_bytes()[..]);

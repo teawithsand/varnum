@@ -10,30 +10,32 @@ use core::ops::*;
 /// Endianness should be handled internally.
 pub trait UnsignedNumDigit:
     Sized
-    + core::fmt::Debug 
+    + core::fmt::Debug
     + Copy
     + Clone
-    + Add<Output=Self>
+    + Add<Output = Self>
     + AddAssign
-    + Sub<Output=Self>
+    + Sub<Output = Self>
     + SubAssign
-    + Mul<Output=Self>
+    + Mul<Output = Self>
     + MulAssign
-    + Div<Output=Self>
+    + Div<Output = Self>
     + DivAssign
-    + Rem<Output=Self>
+    + Rem<Output = Self>
     + RemAssign
-    + BitAnd
+    + BitAnd<Output = Self>
     + BitAndAssign
-    + BitOr
+    + BitOr<Output = Self>
     + BitOrAssign
-    + BitXor
+    + BitXor<Output = Self>
     + BitXorAssign
-    + Shl
+    + Shl<Output = Self>
+    + Shl<u32, Output = Self>
     + ShlAssign
-    + Shr
+    + Shr<Output = Self>
+    + Shr<u32, Output = Self>
     + ShrAssign
-    + Not
+    + Not<Output = Self>
     + PartialEq
     + Eq
     + Hash
@@ -44,11 +46,13 @@ pub trait UnsignedNumDigit:
     + TryFrom<u32>
     + TryFrom<u64>
     + TryFrom<u128>
+    + TryFrom<usize>
     + TryFrom<i8>
     + TryFrom<i16>
     + TryFrom<i32>
     + TryFrom<i64>
     + TryFrom<i128>
+    + TryFrom<isize>
     + Default
 {
     /// Signed version of self.
@@ -104,8 +108,6 @@ pub trait UnsignedNumDigit:
     fn overflowing_shr(self, other: Self::Exponent) -> (Self, bool);
     fn overflowing_div_euclid(self, other: Self) -> (Self, bool);
     fn overflowing_rem_euclid(self, other: Self) -> (Self, bool);
-
-
 
     //// Multiples two numbes, so that higher NUM_BITS are in 1st self and
     //// lower NUM_BITS are in 2nd self
@@ -357,7 +359,6 @@ macro_rules! derive_unsigned_num_digit {
             fn mul_to_parts(self, other: Self) -> (Self, Self) {
                 let res = (self as $double) * (other as $double);
                 let ones = ((!(0 as $type)) as $double);
-                
                 let lower_bits = (res & ones) as $type;
                 let higher_bits = ((res >> Self::NUM_BITS) & ones) as $type;
                 (higher_bits, lower_bits)

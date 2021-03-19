@@ -54,7 +54,6 @@ pub trait SignedBigNum: BigNum {
     /// True if minus flag is set.
     /// Note: it may be true even if value is zero.
     fn is_minus(&self) -> bool;
-
 }
 
 /// SignedBigNum, which is mutable.
