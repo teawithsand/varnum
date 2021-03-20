@@ -1,3 +1,4 @@
+/*
 use crate::num::UnsignedNumDigit;
 
 pub fn assert_in_place_op<D>(res: &mut [D], rhs: &[D])
@@ -21,3 +22,4 @@ pub fn assert_dst_op(res: &mut [u8], lhs: &[u8], rhs: &[u8]) {
         "Res must be bigger than or equal in size to lhs"
     );
 }
+*/

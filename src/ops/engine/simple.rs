@@ -308,7 +308,7 @@ impl UnsignedEngine for SimpleEngine {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::num::{BigNum, DefaultBigNumDigit, VecBigNum};
+    use crate::num::VecBigNum;
 
     #[test]
     fn test_add_accumulate_u16() {
